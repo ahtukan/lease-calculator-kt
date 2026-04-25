@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Lease Calculator</title>
+<meta name="theme-color" content="#0d0d0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lease Calc">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #c8f542;
+    --accent-dim: rgba(200,245,66,0.12);
+    --text: #f0ede8;
+    --text-muted: #888885;
+    --text-dim: #555552;
+    --red: #ff6b6b;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .section {
+    margin-bottom: 1.5rem;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .field label .val {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .prefix {
+    position: absolute;
+    left: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .suffix {
+    position: absolute;
+    right: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  input.has-prefix { padding-left: 28px; }
+  input.has-suffix { padding-right: 32px; }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 3px;
+    -webkit-appearance: none;
+    background: var(--surface2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+  }
+
+  .divider {
+    border: none;
+    border-top: 0.5px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .monthly-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .monthly-amount {
+    font-family: var(--display);
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -1px;
+  }
+
+  .monthly-amount .cents {
+    font-size: 28px;
+    opacity: 0.7;
+  }
+
+  .breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .breakdown-item {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .breakdown-item .bi-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .breakdown-item .bi-val {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .breakdown-item.highlight .bi-val { color: var(--accent); }
+  .breakdown-item.warn .bi-val { color: var(--red); }
+
+  .tip-box {
+    margin-top: 1.25rem;
+    padding: 10px 14px;
+    background: var(--accent-dim);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--accent);
+    border: 0.5px solid rgba(200,245,66,0.2);
+  }
+
+  .tip-box strong { font-weight: 500; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+  }
+
+  .toggle-row label {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .toggle {
+    width: 36px; height: 20px;
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .toggle.on { background: var(--accent-dim); border-color: var(--accent); }
+  .toggle.on::after { background: var(--accent); transform: translateX(16px); }
+
+  .tax-opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: var(--surface);
+  }
+
+  .tax-opt:hover { border-color: var(--border2); }
+  .tax-opt.selected { border-color: var(--accent); background: var(--accent-dim); }
+
+  .tax-radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-dim);
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+
+  .tax-radio.on {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .tax-radio.on::after {
+    content: '';
+    position: absolute;
+    width: 6px; height: 6px;
+    background: var(--bg);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .tax-opt-title { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+  .tax-opt.selected .tax-opt-title { color: var(--accent); }
+  .tax-opt-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+
+  footer {
+    margin-top: 2rem;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="tag">// lease calculator</div>
+    <h1>Auto Lease<br><span>Payment</span></h1>
+  </header>
+
+  <div class="section">
+    <div class="section-label">Vehicle & Price</div>
+
+    <div class="field">
+      <label>MSRP (sticker price)</label>
+      <div class="input-wrap">
+        <span class="prefix">$</span>
+        <input type="number" class="has-prefix" id="msrp-input" value="35000" min="1000" step="100" placeholder="e.g. 35000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Negotiated price <span id="discount-badge" style="font-size:11px;color:var(--accent);background:var(--accent-dim);padding:2px 8px;border-radius:4px;"></span></label>
+      <div class="input-wrap">
+        <span class="prefix">$</span>
+        <input type="number" class="has-prefix" id="sale-input" value="33000" min="1000" step="100" placeholder="e.g. 33000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Residual value (%) <span class="val" id="resid-val">55%</span></label>
+      <input type="range" id="resid-slider" min="30" max="75" step="1" value="55">
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">% of MSRP the car is worth at lease end — set by the dealer</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-label">Lease Terms</div>
+
+    <div class="field">
+      <label>Lease length <span class="val" id="term-val">36 months</span></label>
+      <input type="range" id="term-slider" min="24" max="60" step="12" value="36">
+    </div>
+
+    <div class="field">
+      <label>Money factor <span class="val" id="mf-val">0.00125</span></label>
+      <div class="input-wrap">
+        <input type="number" id="mf-input" value="0.00125" step="0.00001" min="0.00001" max="0.005" style="padding-left:12px;">
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Equivalent APR: <span id="mf-apr" style="color:var(--text-muted)">3.0%</span></div>
+    </div>
+
+    <div class="field">
+      <label>Down payment / cap cost reduction</label>
+      <div class="input-wrap">
+        <span class="prefix">$</span>
+        <input type="number" class="has-prefix" id="down-input" value="2000" step="100" min="0">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Acquisition fee</label>
+      <div class="input-wrap">
+        <span class="prefix">$</span>
+        <input type="number" class="has-prefix" id="acq-input" value="795" step="5" min="0">
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-label">Taxes & Options</div>
+
+    <div class="field">
+      <label>Sales tax rate</label>
+      <div class="input-wrap">
+        <input type="number" class="has-suffix" id="tax-input" value="8.625" min="0" max="20" step="0.001" placeholder="e.g. 8.625">
+        <span class="suffix">%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Varies by state — NY is 8.625%</div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">How tax is handled</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="tax-mode-group">
+        <label class="tax-opt" id="topt-monthly" onclick="setTaxMode('monthly')">
+          <div class="tax-radio on"></div>
+          <div>
+            <div class="tax-opt-title">On each monthly payment</div>
+            <div class="tax-opt-desc">Tax applied to each payment — common in NY, NJ, TX</div>
+          </div>
+        </label>
+        <label class="tax-opt" id="topt-rolled" onclick="setTaxMode('rolled')">
+          <div class="tax-radio"></div>
+          <div>
+            <div class="tax-opt-title">Roll all tax into monthly payments</div>
+            <div class="tax-opt-desc">Total tax on sale price spread across all payments</div>
+          </div>
+        </label>
+        <label class="tax-opt" id="topt-upfront" onclick="setTaxMode('upfront')">
+          <div class="tax-radio"></div>
+          <div>
+            <div class="tax-opt-title">Pay all tax upfront</div>
+            <div class="tax-opt-desc">Full tax paid at signing — lower monthly, higher due at delivery</div>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="result-card">
+    <div class="monthly-label">Est. monthly payment</div>
+    <div class="monthly-amount" id="monthly-display">$<span id="monthly-int">421</span><span class="cents">.<span id="monthly-dec">50</span></span></div>
+
+    <div class="breakdown">
+      <div class="breakdown-item">
+        <div class="bi-label">Depreciation</div>
+        <div class="bi-val" id="b-dep">$306/mo</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="bi-label">Finance charge</div>
+        <div class="bi-val" id="b-fin">$85/mo</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="bi-label" id="b-tax-label">Tax</div>
+        <div class="bi-val" id="b-tax">$34/mo</div>
+      </div>
+      <div class="breakdown-item highlight">
+        <div class="bi-label">Total cost</div>
+        <div class="bi-val" id="b-total">$17,174</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="bi-label">Effective APR</div>
+        <div class="bi-val" id="b-apr">3.0%</div>
+      </div>
+      <div class="breakdown-item warn">
+        <div class="bi-label">Cost to own vs buy</div>
+        <div class="bi-val" id="b-gap">+$4,174</div>
+      </div>
+    </div>
+
+    <div class="tip-box" id="tip-box">
+      <strong>Tip:</strong> A money factor of 0.00125 = 3.0% APR. Dealers sometimes mark it up — always ask for the buy rate.
+    </div>
+  </div>
+
+  <footer>
+    Estimates only. Does not include registration, doc fees, or insurance.<br>
+    Always verify terms with your dealer.
+  </footer>
+</div>
+
+<script>
+  let taxMode = 'monthly'; // 'monthly' | 'rolled' | 'upfront'
+
+  function setTaxMode(mode) {
+    taxMode = mode;
+    ['monthly','rolled','upfront'].forEach(m => {
+      const opt = document.getElementById('topt-' + m);
+      const radio = opt.querySelector('.tax-radio');
+      opt.classList.toggle('selected', m === mode);
+      radio.classList.toggle('on', m === mode);
+    });
+    calculate();
+  }
+
+  function fmt(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
+
+  function calculate() {
+    const msrp = parseFloat(document.getElementById('msrp-input').value) || 0;
+    const salePrice = parseFloat(document.getElementById('sale-input').value) || 0;
+
+    // Show discount badge
+    const discount = msrp - salePrice;
+    const discountPct = msrp > 0 ? (discount / msrp * 100) : 0;
+    const badge = document.getElementById('discount-badge');
+    if (discount > 0 && msrp > 0) {
+      badge.textContent = `-$${discount.toLocaleString('en-US')} (${discountPct.toFixed(1)}% off)`;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+    const residPct = parseFloat(document.getElementById('resid-slider').value) / 100;
+    const termMonths = parseFloat(document.getElementById('term-slider').value);
+    const mf = parseFloat(document.getElementById('mf-input').value) || 0.00125;
+    const down = parseFloat(document.getElementById('down-input').value) || 0;
+    const acqFee = parseFloat(document.getElementById('acq-input').value) || 0;
+    const taxRate = (parseFloat(document.getElementById('tax-input').value) || 0) / 100;
+
+    const residualValue = msrp * residPct;
+    const capCost = salePrice + acqFee - down;
+    const depreciation = (capCost - residualValue) / termMonths;
+    const financeCharge = (capCost + residualValue) * mf;
+    const basePayment = depreciation + financeCharge;
+
+    let monthlyPayment, taxAmount, upfrontTax = 0;
+    if (taxMode === 'monthly') {
+      taxAmount = basePayment * taxRate;
+      monthlyPayment = basePayment + taxAmount;
+    } else if (taxMode === 'rolled') {
+      const totalTax = salePrice * taxRate;
+      taxAmount = totalTax / termMonths;
+      monthlyPayment = basePayment + taxAmount;
+    } else {
+      upfrontTax = salePrice * taxRate;
+      taxAmount = 0;
+      monthlyPayment = basePayment;
+    }
+
+    const totalCost = monthlyPayment * termMonths + down + upfrontTax;
+    const aprEquiv = mf * 2400;
+
+    const leasePremium = totalCost - (salePrice - residualValue) - down;
+
+    const monthly = monthlyPayment;
+    const intPart = Math.floor(monthly);
+    const decPart = Math.round((monthly - intPart) * 100).toString().padStart(2, '0');
+    document.getElementById('monthly-int').textContent = intPart.toLocaleString('en-US');
+    document.getElementById('monthly-dec').textContent = decPart;
+
+    document.getElementById('b-dep').textContent = '$' + fmt(depreciation) + '/mo';
+    document.getElementById('b-fin').textContent = '$' + fmt(financeCharge) + '/mo';
+    document.getElementById('b-tax').textContent = taxMode === 'upfront'
+      ? '$' + fmtInt(upfrontTax) + ' at signing'
+      : '$' + fmt(taxAmount) + '/mo';
+    document.getElementById('b-tax-label').textContent = taxMode === 'upfront' ? 'Tax (upfront)' : 'Tax';
+    document.getElementById('b-total').textContent = '$' + fmtInt(totalCost);
+    document.getElementById('b-apr').textContent = aprEquiv.toFixed(1) + '%';
+    document.getElementById('b-gap').textContent = '+$' + fmtInt(leasePremium);
+    document.getElementById('b-apr-breakdown').textContent = aprEquiv.toFixed(1) + '%';
+
+    // Dynamic tip
+    const tips = [];
+    if (mf > 0.002) tips.push(`Money factor ${mf.toFixed(5)} = ${aprEquiv.toFixed(1)}% APR — that's on the high side. Try to negotiate it down.`);
+    if (residPct < 0.45) tips.push(`Low residual (${(residPct*100).toFixed(0)}%) means higher depreciation — leasing this car may not be cost-effective.`);
+    if (residPct >= 0.60) tips.push(`High residual (${(residPct*100).toFixed(0)}%) = lower monthly payment. This is a great car to lease.`);
+    if (down > 3000) tips.push(`Large down payments reduce monthly cost but you lose that money if the car is totaled early. Consider keeping it lower.`);
+    if (tips.length === 0) tips.push(`Money factor ${mf.toFixed(5)} = ${aprEquiv.toFixed(1)}% APR. Dealers sometimes mark it up — always ask for the buy rate.`);
+
+    document.getElementById('tip-box').innerHTML = '<strong>Tip:</strong> ' + tips[0];
+  }
+
+  // Sync sliders to labels
+  function bindSlider(sliderId, labelId, prefix, suffix, divisor) {
+    const slider = document.getElementById(sliderId);
+    const label = document.getElementById(labelId);
+    slider.addEventListener('input', () => {
+      const v = parseFloat(slider.value) / (divisor || 1);
+      label.textContent = (prefix || '') + v.toLocaleString('en-US') + (suffix || '');
+      calculate();
+    });
+  }
+
+  document.getElementById('msrp-input').addEventListener('input', calculate);
+  document.getElementById('sale-input').addEventListener('input', calculate);
+
+  bindSlider('resid-slider', 'resid-val', '', '%', 1);
+  bindSlider('term-slider', 'term-val', '', ' months', 1);
+
+  document.getElementById('tax-input').addEventListener('input', calculate);
+
+  document.getElementById('mf-input').addEventListener('input', () => {
+    const mf = parseFloat(document.getElementById('mf-input').value) || 0;
+    document.getElementById('mf-val').textContent = mf.toFixed(5);
+    document.getElementById('mf-apr').textContent = (mf * 2400).toFixed(1) + '%';
+    calculate();
+  });
+
+  document.getElementById('down-input').addEventListener('input', calculate);
+  document.getElementById('acq-input').addEventListener('input', calculate);
+
+  const dummyEl = document.createElement('span');
+  dummyEl.id = 'b-apr-breakdown';
+  document.body.appendChild(dummyEl);
+
+  setTaxMode('monthly');
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>
